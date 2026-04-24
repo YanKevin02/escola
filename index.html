@@ -1,15 +1,300 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecionando...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Escolar</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --secondary: #f39c12;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --border: #ddd;
+            --muted: #95a5a6;
+        }
+
+        body.dark-mode {
+            --bg: oklch(12.9% 0.042 264.695);
+            --card-bg: oklch(27.9% 0.041 260.031);
+            --text: #f0f0f0;
+            --border: #444;
+            --primary: #4979ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container { max-width: 950px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-container {
+            margin-bottom: 30px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        #filterInput {
+            border: 1px solid var(--primary);
+            font-size: 1rem;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            outline: none;
+            max-width: 400px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            font-size: 1.1rem;
+            margin-top: 0;
+        }
+
+        input[type="text"], input[type="date"], input[type="number"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            background: var(--card-bg);
+            color: var(--text);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-theme { width: auto; padding: 8px 15px; background: var(--text); color: var(--bg); }
+
+        .item-list { list-style: none; padding: 0; margin-top: 15px; }
+
+        .item {
+            background: rgba(0,0,0,0.03);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        /* Estilo para itens concluídos */
+        .item.completed {
+            opacity: 0.5;
+            border-left-color: var(--muted) !important;
+            background: rgba(0,0,0,0.01);
+        }
+
+        .item.completed strong {
+            text-decoration: line-through;
+            color: var(--muted);
+        }
+
+        .item.completed .countdown { display: none; }
+
+        body.dark-mode .item { background: rgba(255,255,255,0.05); }
+
+        .item-content { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+
+        .checkbox { width: 18px; height: 18px; cursor: pointer; }
+
+        .countdown { font-size: 0.75rem; display: block; color: var(--secondary); font-weight: bold; }
+        .overdue { color: var(--danger); }
+
+        .btn-del {
+            background: var(--danger);
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+    </style>
 </head>
 <body>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      window.location.href = "/escola/pages/tarefas.html"
-    })
-  </script>
+
+<div class="container">
+    <header>
+        <h1 style="margin:0">📚 Agenda Escolar</h1>
+        <button class="btn-theme" onclick="toggleDarkMode()" id="themeBtn">🌙 Modo Escuro</button>
+    </header>
+
+    <div class="filter-container">
+        <input type="text" id="filterInput" placeholder="🔍 Filtrar matérias ou tarefas..." oninput="renderAll()">
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>📝 Tarefas</h2>
+            <input type="text" id="taskName" placeholder="O que precisa fazer?">
+            <input type="date" id="taskDate">
+            <button onclick="addItem('tasks', 'taskName', 'taskDate')">Adicionar</button>
+            <ul id="taskList" class="item-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Trabalhos e Projetos</h2>
+            <input type="text" id="projectName" placeholder="Trabalho">
+            <input type="date" id="projectDate">
+            <button onclick="addItem('projects', 'projectName', 'projectDate')" style="background-color: var(--secondary);">Registrar</button>
+            <ul id="projectList" class="item-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>💯 Notas</h2>
+            <input type="text" id="examSubject" placeholder="Disciplina">
+            <input type="number" id="examGrade" placeholder="Nota" step="0.1" min="0" max="10">
+            <button onclick="addGrade()" style="background-color: var(--success);">Salvar Nota</button>
+            <ul id="gradeList" class="item-list"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    let data = JSON.parse(localStorage.getItem('schoolAgendaProV3')) || {
+        tasks: [],
+        projects: [],
+        grades: [],
+        darkMode: true
+    };
+
+    function toggleDarkMode() {
+        data.darkMode = !data.darkMode;
+        applyTheme();
+        saveData();
+    }
+
+    function applyTheme() {
+        const btn = document.getElementById('themeBtn');
+        document.body.classList.toggle('dark-mode', data.darkMode);
+        btn.innerText = data.darkMode ? "☀️ Modo Claro" : "🌙 Modo Escuro";
+    }
+
+    function saveData() {
+        localStorage.setItem('schoolAgendaProV3', JSON.stringify(data));
+        renderAll();
+    }
+
+    function addItem(type, nameId, dateId) {
+        const name = document.getElementById(nameId).value;
+        const date = document.getElementById(dateId).value;
+        if (name && date) {
+            data[type].push({ name, date, id: Date.now(), completed: false });
+            document.getElementById(nameId).value = '';
+            document.getElementById(dateId).value = '';
+            saveData();
+        }
+    }
+
+    function addGrade() {
+        const subject = document.getElementById('examSubject').value;
+        const grade = document.getElementById('examGrade').value;
+        if (subject && grade) {
+            data.grades.push({ subject, grade, id: Date.now() });
+            document.getElementById('examSubject').value = '';
+            document.getElementById('examGrade').value = '';
+            saveData();
+        }
+    }
+
+    function deleteItem(type, id) {
+        data[type] = data[type].filter(item => item.id !== id);
+        saveData();
+    }
+
+    function toggleComplete(type, id) {
+        const item = data[type].find(i => i.id === id);
+        if (item) {
+            item.completed = !item.completed;
+            saveData();
+        }
+    }
+
+    function getCountdownText(dateStr) {
+        const deadline = new Date(dateStr + 'T23:59:59');
+        const now = new Date();
+        const diffInDays = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24)-1);
+        if (diffInDays < 0) return `<span class="countdown overdue"> Atrasado (${Math.abs(diffInDays)}d)</span>`;
+        if (diffInDays === 0) return `<span class="countdown overdue"> É HOJE!</span>`;
+        if (diffInDays === 1) return `<span class="countdown"> Amanhã</span>`;
+        return `<span class="countdown">s ${diffInDays} dias</span>`;
+    }
+
+    function renderAll() {
+        const query = document.getElementById('filterInput').value.toLowerCase();
+
+        const renderItems = (listId, items, type, border) => {
+            const filtered = items.filter(i => i.name.toLowerCase().includes(query));
+            document.getElementById(listId).innerHTML = filtered.map(i => `
+                <li class="item ${i.completed ? 'completed' : ''}" style="border-left-color: ${border}">
+                    <div class="item-content">
+                        <input type="checkbox" class="checkbox" ${i.completed ? 'checked' : ''} 
+                               onchange="toggleComplete('${type}', ${i.id})">
+                        <div>
+                            <strong>${i.name}</strong>
+                            ${getCountdownText(i.date)}
+                        </div>
+                    </div>
+                    <button class="btn-del" onclick="deleteItem('${type}', ${i.id})">×</button>
+                </li>
+            `).join('');
+        };
+
+        renderItems('taskList', data.tasks, 'tasks', 'var(--primary)');
+        renderItems('projectList', data.projects, 'projects', 'var(--secondary)');
+
+        // Notas (sem checkbox de completar)
+        const filteredGrades = data.grades.filter(g => g.subject.toLowerCase().includes(query));
+        document.getElementById('gradeList').innerHTML = filteredGrades.map(g => `
+            <li class="item" style="border-left-color: var(--success)">
+                <span>${g.subject}: <strong>${g.grade}</strong></span>
+                <button class="btn-del" onclick="deleteItem('grades', ${g.id})">×</button>
+            </li>
+        `).join('');
+    }
+
+    applyTheme();
+    renderAll();
+</script>
+
 </body>
 </html>
