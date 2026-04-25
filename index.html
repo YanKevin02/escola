@@ -392,12 +392,23 @@
     </div>
 
     <script>
-      let data = JSON.parse(localStorage.getItem("schoolAgendaProV4")) || {
-        tasks: [],
-        projects: [],
-        grades: [],
-        darkMode: true,
-      };
+      // Tentar recuperar dados de versões anteriores ou usar padrão
+      let savedData = localStorage.getItem("schoolAgendaProV4");
+      let data;
+      
+      if (savedData) {
+        try {
+          data = JSON.parse(savedData);
+          // Garantir que darkMode existe
+          if (data.darkMode === undefined) {
+            data.darkMode = true;
+          }
+        } catch (e) {
+          data = { tasks: [], projects: [], grades: [], darkMode: true };
+        }
+      } else {
+        data = { tasks: [], projects: [], grades: [], darkMode: true };
+      }
 
       let lastDeleted = null;
       let undoTimeout = null;
@@ -482,8 +493,12 @@
       }
 
       function saveData() {
-        localStorage.setItem("schoolAgendaProV4", JSON.stringify(data));
-        renderAll();
+        try {
+          localStorage.setItem("schoolAgendaProV4", JSON.stringify(data));
+          renderAll();
+        } catch (e) {
+          console.error("Erro ao salvar:", e);
+        }
       }
 
       function addItem(type, nameId, dateId) {
