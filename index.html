@@ -10,7 +10,7 @@
         --secondary: #f39c12;
         --success: #27ae60;
         --danger: #e74c3c;
-        --bg: #f4f7f6;
+        --bg: oklch(88% 0.011 106.6);
         --card-bg: #ffffff;
         --text: #2c3e50;
         --border: #ddd;
@@ -18,8 +18,8 @@
       }
 
       body.dark-mode {
-        --bg: oklch(12.9% 0.042 264.695);
-        --card-bg: oklch(27.9% 0.041 260.031);
+        --bg: oklch(13% 0.028 261.692);
+        --card-bg: oklch(21% 0.034 264.665);
         --text: #f0f0f0;
         --border: #444;
         --primary: #4979ff;
@@ -34,12 +34,22 @@
         transition:
           background 0.3s,
           color 0.3s;
+        box-sizing: border-box;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
       }
 
       .container {
         max-width: 950px;
         margin: 0 auto;
         padding-bottom: 80px;
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
       }
 
       header {
@@ -65,10 +75,14 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      .flex {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
         gap: 20px;
+        align-content: center;
+        max-width: 100%;
+        overflow: hidden;
       }
 
       .card {
@@ -76,6 +90,9 @@
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
       }
 
       h2 {
@@ -118,6 +135,8 @@
         list-style: none;
         padding: 0;
         margin-top: 15px;
+        overflow: hidden;
+        max-width: 100%;
       }
 
       .item {
@@ -127,9 +146,14 @@
         border-radius: 6px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         border-left: 4px solid var(--primary);
         transition: all 0.3s ease;
+        flex-wrap: wrap;
+        gap: 10px;
+        overflow: hidden;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       .item.completed {
@@ -151,21 +175,35 @@
 
       .item-content {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
-        flex-grow: 1;
+        flex: 1 1 0%;
+        min-width: 0;
+        overflow: hidden;
       }
-      .checkbox {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
+
+      .item-content > div {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
       }
+
+      .item-content strong {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        display: inline-block;
+        max-width: 100%;
+      }
+
       .countdown {
         font-size: 0.75rem;
         display: block;
         color: var(--secondary);
         font-weight: bold;
+        word-break: break-word;
       }
+
       .overdue {
         color: var(--danger);
       }
@@ -175,7 +213,6 @@
         width: 30px;
         height: 30px;
         padding: 0;
-        margin-left: 10px;
         flex-shrink: 0;
       }
 
@@ -218,9 +255,77 @@
         width: auto;
         margin: 0;
       }
+
+      /* NOTIFICAÇÕES */
+      #notificationContainer {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 350px;
+      }
+
+      .notification {
+        background: var(--card-bg);
+        border-left: 4px solid var(--danger);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .notification-content {
+        flex: 1;
+      }
+
+      .notification-title {
+        font-weight: bold;
+        color: var(--danger);
+        margin-bottom: 5px;
+        display: block;
+      }
+
+      .notification-text {
+        font-size: 0.9rem;
+        color: var(--text);
+      }
+
+      .notification-close {
+        background: transparent;
+        color: var(--muted);
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0;
+        width: auto;
+        line-height: 1;
+      }
+
+      .notification-close:hover {
+        color: var(--text);
+      }
     </style>
   </head>
   <body>
+    <div id="notificationContainer"></div>
     <div class="container">
       <header>
         <h1 style="margin: 0">📚 Agenda Escolar</h1>
@@ -238,7 +343,7 @@
         />
       </div>
 
-      <div class="grid">
+      <div class="flex">
         <div class="card">
           <h2>📝 Tarefas</h2>
           <input type="text" id="taskName" placeholder="O que precisa fazer?" />
@@ -296,6 +401,73 @@
 
       let lastDeleted = null;
       let undoTimeout = null;
+      let notifiedItems = JSON.parse(localStorage.getItem("notifiedItems")) || [];
+
+      // Solicitar permissão para notificações do sistema
+      function requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+      }
+
+      // Notificação do sistema (nativa)
+      function sendSystemNotification(title, body) {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification(title, {
+            body: body,
+            icon: "📚",
+            tag: "agenda-escolar",
+            requireInteraction: false,
+          });
+        }
+      }
+
+      // Notificação visual no site
+      function showInAppNotification(title, text) {
+        const container = document.getElementById("notificationContainer");
+        const notification = document.createElement("div");
+        notification.className = "notification";
+        notification.innerHTML = `
+          <div class="notification-content">
+            <span class="notification-title">${title}</span>
+            <span class="notification-text">${text}</span>
+          </div>
+          <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(notification);
+
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.remove();
+          }
+        }, 8000);
+      }
+
+      // Verificar tarefas com prazo para hoje
+      function checkNotifications() {
+        const today = new Date().toISOString().split("T")[0];
+        const allItems = [...data.tasks, ...data.projects].filter((i) => !i.completed);
+
+        allItems.forEach((item) => {
+          if (item.date === today && !notifiedItems.includes(item.id)) {
+            const message = `${item.name} tem prazo para hoje.`;
+            
+            // Notificação no app
+            showInAppNotification("⚠️ Prazo Hoje!", message);
+            
+            // Notificação do sistema
+            sendSystemNotification("⚠️ Prazo Hoje!", message);
+            
+            notifiedItems.push(item.id);
+            localStorage.setItem("notifiedItems", JSON.stringify(notifiedItems));
+          }
+        });
+      }
+
+      // Verificar notificações ao carregar e a cada minuto
+      requestNotificationPermission();
+      checkNotifications();
+      setInterval(checkNotifications, 60000);
 
       function toggleDarkMode() {
         data.darkMode = !data.darkMode;
@@ -401,9 +573,14 @@
           .value.toLowerCase();
 
         const renderItems = (listId, items, type, border) => {
-          const filtered = items.filter((i) =>
-            i.name.toLowerCase().includes(query),
-          );
+          const filtered = items
+            .filter((i) => i.name.toLowerCase().includes(query))
+            .sort((a, b) => {
+              if (a.completed !== b.completed) {
+                return a.completed ? 1 : -1;
+              }
+              return new Date(a.date) - new Date(b.date);
+            });
           document.getElementById(listId).innerHTML = filtered
             .map(
               (i) => `
@@ -411,7 +588,7 @@
                     <div class="item-content">
                         <input type="checkbox" class="checkbox" ${i.completed ? "checked" : ""} 
                                onchange="toggleComplete('${type}', ${i.id})">
-                        <div>
+                        <div style="word-break: break-word; max-width: 100%;">
                             <strong>${i.name}</strong>
                             ${getCountdownText(i.date)}
                         </div>
@@ -431,14 +608,14 @@
           "var(--secondary)",
         );
 
-        const filteredGrades = data.grades.filter((g) =>
-          g.subject.toLowerCase().includes(query),
-        );
+        const filteredGrades = data.grades
+          .filter((g) => g.subject.toLowerCase().includes(query))
+          .sort((a, b) => new Date(a.id) - new Date(b.id));
         document.getElementById("gradeList").innerHTML = filteredGrades
           .map(
             (g) => `
             <li class="item" style="border-left-color: var(--success)">
-                <span>${g.subject}: <strong>${g.grade}</strong></span>
+                <span style="word-break: break-word; max-width: 100%;">${g.subject}: <strong>${g.grade}</strong></span>
                 <button class="btn-del" onclick="deleteItem('grades', ${g.id})">×</button>
             </li>
         `,
